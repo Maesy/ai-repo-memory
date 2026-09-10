@@ -24,9 +24,37 @@ A PRD az elvárást mutatja; a döntésrekord azt indokolja, miért ezt választ
 2. Használd a [követelmény-](../templates/requirement.md) vagy
    [döntéssablont](../templates/decision.md), és töltsd ki az indokolt mezőket.
 3. Egyeztetésig maradjon `proposed`. Elfogadást csak valós felhatalmazás alapján rögzíts.
-4. Frissítsd az [indexet](INDEX.md), és végezd el az ellenőrzést a
-   [karbantartási szabályok](governance.md) szerint.
+4. A dokumentumot író agent futtassa a `record-decision` skill indexgeneráló
+   scriptjét, majd a `validate-knowledge` indexellenőrzését. A fejlesztőnek
+   nem kell az [index](INDEX.md) bejegyzéseit karbantartania.
 5. A tudásváltozást a hozzá tartozó kódváltozással együtt nézzétek át.
+
+## Az index frissítése az író agent feladata
+
+Az index a Markdown-dokumentumok első `#` címsorából és relatív útvonalából készül.
+Az elején álló YAML-fejlécben, kódkerítésben vagy HTML-kommentblokkban szereplő
+címsorokat kihagyja. A cím előtt lezáratlan komment vagy hiányzó cím esetén hibával jelez.
+Minden saját tudásfájlnak legyen informatív címe. A gyökérbeli INDEX.md, README.md
+és governance.md segédfájl, ezért nem kerül a dokumentumlistába; a sablonok kívül
+vannak a tudástáron. A státusz és jóváhagyás továbbra is a teljes forrásban marad.
+
+A repo gyökeréből az agent ezeket futtatja:
+
+```text
+node .agents/skills/record-decision/scripts/update-index.mjs --write
+node .agents/skills/record-decision/scripts/update-index.mjs --check
+```
+
+A `--write` a teljes INDEX.md-t újra előállítja. Azonos eredménynél a fájlt és
+időbélyegét sem módosítja. A `--check` nem ír fájlt; eltérésnél hibával jelez.
+Új, átnevezett, átcímzett vagy törölt dokumentumot így nem kell egy második helyen
+kézzel átvezetni. A tartalom érdemi helyességét továbbra is az agent és a felelős
+review vizsgálja. Meglévő indexbe írt egyedi magyarázatot generálás előtt a megfelelő
+forrásdokumentumba kell átvinni.
+
+A generátor egyszerre egy indexírót enged, és írás előtt újra ellenőrzi a forrásokat.
+A forrásdokumentumok párhuzamos írását a csapatnak továbbra is össze kell hangolnia.
+Hiba esetén megmarad az előző index; a feladat nem jelenthető késznek sikeres ellenőrzés nélkül.
 
 ## Folytatás és több agent
 

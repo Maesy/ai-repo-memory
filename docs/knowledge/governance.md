@@ -25,11 +25,15 @@
 - Teljes forrásolvasás; nincs fel nem oldott ellentmondás vagy nem jelölt bizonytalanság.
 - Helyes célmappa, egyedi ID, értelmes verzió és a tényleges állapotnak megfelelő státusz.
 - Létező hivatkozások; az indexből elérhető forrás; az utódlási lánc nem körkörös.
+- A tudástárat módosító agent generálta az indexet a `record-decision` scriptjével,
+  és sikeresen futtatta a `--check` ellenőrzést. A fejlesztő nem indexsorokat szerkeszt.
 - A jóváhagyási állítás visszakereshető, és a mostani verzióhoz tartozik.
 - A teszt bizonyítékát külön kezeld az elvárástól. Strukturális helyességből nem
   következik üzleti helyesség vagy sikeres megvalósítás.
 - Nézd át a teljes változási listát és diffet. Írást, commitot vagy törlést meghatározó
   fájllistát ne csonkíts; kimenetszűrőnél ellenőrizd a szűretlen eredményt is.
 
-Ez az alap ellenőrzési eljárása. Nincs beépített gépi sémaellenőrző, tartalomhash,
-írózár vagy megértést bizonyító nyugtázás.
+Az index gépi ellenőrzése a navigáció és a források címének, útvonalának egyezését
+vizsgálja. Nem bizonyít üzleti helyességet, jóváhagyást vagy agent általi megértést.
+Az indexgenerátor írózára csak az index közzétételét sorosítja, a tudásdokumentumok
+szerkesztését nem. A hookok külön állapota felajánlott jelzést, nem olvasási nyugtát tárol.

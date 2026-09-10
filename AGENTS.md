@@ -1,8 +1,8 @@
 # Shared project instructions
 
 This is a technology-neutral project starter with optional, configured Claude and
-Codex knowledge hooks. The file-based workflows need no runtime. The hooks need
-Node 22+ but no npm dependencies or background service. Use the project's own toolchain.
+Codex knowledge hooks. Reading the files needs no runtime. Index generation and
+hooks need Node 22+ but no npm dependencies or background service. Use the project's own toolchain.
 
 ## Start and continue work
 
@@ -24,8 +24,13 @@ Node 22+ but no npm dependencies or background service. Use the project's own to
 
 - Use `record-decision` for a lasting requirement or decision. Search first;
   preserve the rationale and distinguish proposals from accepted requirements.
-- Use `validate-knowledge` after knowledge changes. The starter uses a review
-  checklist, not a programmatic validator; do not claim an automated check ran.
+- The agent changing knowledge owns its index update. After adding, renaming,
+  retitling or deleting a knowledge document, run
+  `node .agents/skills/record-decision/scripts/update-index.mjs --write`.
+  Do not ask the human operator to maintain index entries.
+- Use `validate-knowledge` after knowledge changes, including the script's
+  read-only `--check` before reporting completion. This validates generated
+  navigation, not document meaning or approval; those still require review.
 - Keep requirements, implementation and test evidence distinct. Surface conflicts
   and stale documents. Do not invent approval, dates, test results or loaded files.
 - Coordinate one writer per knowledge change. Preserve others' local changes;

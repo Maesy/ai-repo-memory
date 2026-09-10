@@ -11,15 +11,15 @@ async function fixture(t) {
     assert.ok(root.startsWith(path.join(os.tmpdir(), 'repo knowledge á-')));
     await fs.rm(root, { recursive: true, force: true });
   });
-  await fs.mkdir(path.join(root, '.agents/hooks'), { recursive: true });
+  await fs.mkdir(path.join(root, '.agents/skills/refresh-repo-knowledge/scripts'), { recursive: true });
   await fs.mkdir(path.join(root, 'docs/knowledge'), { recursive: true });
   await fs.mkdir(path.join(root, 'src/nested'), { recursive: true });
-  await fs.copyFile(new URL('../.agents/hooks/repo-knowledge.mjs', import.meta.url), path.join(root, '.agents/hooks/repo-knowledge.mjs'));
+  for (const entry of ["knowledge", "claude", "codex"]) await fs.copyFile(new URL('../.agents/skills/refresh-repo-knowledge/scripts/' + entry + '.mjs', import.meta.url), path.join(root, '.agents/skills/refresh-repo-knowledge/scripts/' + entry + '.mjs'));
   await fs.writeFile(path.join(root, 'docs/project.md'), '# Fixture project');
   await fs.writeFile(path.join(root, 'docs/knowledge/INDEX.md'), '# Index');
   const write = (text) => fs.writeFile(path.join(root, 'docs/knowledge/decision.md'), text);
   const run = (name, overrides = {}, vendor = 'claude', args = null) => new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args ?? [path.join(root, '.agents/hooks/repo-knowledge.mjs'), vendor], { cwd: root, windowsHide: true });
+    const child = spawn(process.execPath, args ?? [path.join(root, '.agents/skills/refresh-repo-knowledge/scripts/' + vendor + '.mjs')], { cwd: root, windowsHide: true });
     let stdout = '', stderr = '';
     child.stdout.on('data', (c) => stdout += c); child.stderr.on('data', (c) => stderr += c);
     child.on('error', reject);
@@ -92,8 +92,8 @@ test('Codex configured launcher resolves a workspace from a nested cwd', async (
   const f = await fixture(t);
   const config = JSON.parse(await fs.readFile(new URL('../.codex/hooks.json', import.meta.url), 'utf8'));
   const command = config.hooks.SessionStart[0].hooks[0].command;
-  const code = command.match(/^node -e "(.*)" codex$/)[1];
-  const response = await f.run('SessionStart', { cwd: path.join(f.root, 'src/nested') }, 'codex', ['-e', 'process.chdir(' + JSON.stringify(path.join(f.root, 'src/nested')) + ');' + code, 'codex']);
+  const code = command.match(/^node -e "(.*)"$/)[1];
+  const response = await f.run('SessionStart', { cwd: path.join(f.root, 'src/nested') }, 'codex', ['-e', 'process.chdir(' + JSON.stringify(path.join(f.root, 'src/nested')) + ');' + code]);
   assert.ok(response.hookSpecificOutput);
 });
 test('corrupt state and orphan lock fail open and do not claim freshness', async (t) => {

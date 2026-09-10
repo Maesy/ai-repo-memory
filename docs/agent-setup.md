@@ -8,9 +8,10 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
 1. Az új projekt tényleges gyökerét nyisd meg. Töltsd ki a [projektadatlapot](project.md).
 2. Indíts új sessiont a beállítások átvétele után. A már betöltött kontextus nem törlődik
    egy kapcsoló átállításától.
-3. Ellenőrizd a négy projektskill elérhetőségét. A hookos automatizáláshoz Node 22+
+3. Ellenőrizd a négy projektskill elérhetőségét. A hookokhoz és az index generálásához,
+   ellenőrzéséhez Node 22+ szükséges. A hookok futásához támogatott kliens
    és a kliens hook-trustja kell; npm install, MCP és külön plugin nem szükséges.
-   A kézi workflow Node nélkül is működik. [Hookbeállítás és próba](hooks.md).
+   A meglévő tudás olvasása és keresése Node nélkül is működik. [Hookbeállítás és próba](hooks.md).
 4. A választott modell maradhat a csapat bevált alapértéke. A repo nem ír elő modellt,
    gondolkodási szintet vagy teljes gépi hozzáférést.
 5. Végezd el az [instrukcióbetöltés ellenőrzését](instruction-loading.md), külön mindkét kliensben.
@@ -21,7 +22,7 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
 - A gyökér `CLAUDE.md` Claude-specifikus `@AGENTS.md` importot használ.
 - A projekt `.claude/settings.json` fájljában az `autoMemoryEnabled: false`
   a saját automatikus memória kikapcsolásának dokumentált beállítása.
-- Ugyanitt a négy lifecycle-hook a közös `.agents/hooks/repo-knowledge.mjs`
+- Ugyanitt a négy lifecycle-hook a közös `.agents/skills/refresh-repo-knowledge/scripts/claude.mjs`
   programot indítja. A repo gyökerét a Claude projektútvonalából veszi.
 - A `.claude/skills/` belépői a közös `.agents/skills/` fájlok teljes elolvasását kérik.
   Ezek követett normál fájlok, nem symlinkek. A workflow a közös forrásban él.

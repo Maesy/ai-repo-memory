@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-const root = await fs.realpath(fileURLToPath(new URL('../../', import.meta.url)));
+const root = await fs.realpath(fileURLToPath(new URL('../../../../', import.meta.url)));
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const events = new Set(['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop']);
 const within = (parent, child) => {
@@ -130,6 +130,7 @@ async function run(event, vendor) {
   } finally { await release(); }
 }
 
+export async function main(vendor) {
 try {
   if (process.argv.includes('--doctor')) {
     const current = await snapshot();
@@ -141,9 +142,10 @@ try {
       if (size > 1024 * 1024) throw new Error('Hook event exceeds the 1 MiB input limit.');
       chunks.push(chunk);
     }
-    await run(JSON.parse(Buffer.concat(chunks).toString('utf8')), process.argv.at(-1));
+    await run(JSON.parse(Buffer.concat(chunks).toString('utf8')), vendor);
   }
 } catch (error) {
   // Fail open: a notification helper must not prevent ordinary work or invent an approval request.
   await emit({ systemMessage: 'Repository knowledge hook could not check freshness. Use refresh-repo-knowledge explicitly. ' + error.message }).catch(() => {});
+}
 }

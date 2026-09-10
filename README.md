@@ -2,8 +2,8 @@
 
 **Közös instrukciók és verziókezelt projekttudás Claude Code és Codex számára.**
 Kotlin-, Java-, .NET-, Python-, webes vagy más projekthez is használható.
-A kézi tudáskezeléshez nem kell runtime. A mellékelt Claude- és Codex-hookokhoz
-Node 22+ szükséges; npm install, Python és háttérszolgáltatás nem kell.
+A dokumentumok olvasásához nem kell runtime. Az indexgenerátorhoz és a mellékelt
+Claude- és Codex-hookokhoz Node 22+ szükséges; npm install, Python és háttérszolgáltatás nem kell.
 Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltételek.
 
 ## Indulás
@@ -38,17 +38,30 @@ A projektkonfiguráció hatása a kliens támogatásától és bizalmi állapot�
   olvasási utasítást használnak; egy link önmagában nem betöltés.
 
 Részletes desktop- és CLI-útmutató, hivatalos forrásokkal:
-[agentbeállítások](docs/agent-setup.md). A reggeli tereptapasztalat tanulságai:
+[agentbeállítások](docs/agent-setup.md). A betöltés működése:
 [mit lát ténylegesen az agent?](docs/instruction-loading.md).
 
 ## Napi munkamenet
 
 1. **Keresés:** `find-repo-knowledge` — olvasd el a feladathoz tartozó forrásokat.
-2. **Rögzítés:** `record-decision` — tartós döntés és indoklás a megfelelő helyre.
+2. **Rögzítés:** `record-decision` — tartós döntés és indoklás a megfelelő helyre;
+   az író agent a skill scriptjével frissíti az indexet.
 3. **Frissítés:** `refresh-repo-knowledge` — folytatásnál és változásnál újraolvasás.
-4. **Ellenőrzés:** `validate-knowledge` — státusz, kapcsolatok, jóváhagyás és diff átnézése.
+4. **Ellenőrzés:** `validate-knowledge` — gépi indexellenőrzés, majd státusz,
+   kapcsolatok, jóváhagyás és diff átnézése.
 
-Ez eljárás fájlműveletekkel. Az utolsó skill nem egy telepített gépi validátor.
+Az index karbantartása a tudástárat módosító agent feladata. A generátor a források
+címéből és útvonalából dolgozik; hozzáadás, átnevezés, címváltozás és törlés után
+ugyanazzal a paranccsal fut. Változatlan bemenetnél nem írja át az indexet.
+
+```text
+node .agents/skills/record-decision/scripts/update-index.mjs --write
+node .agents/skills/record-decision/scripts/update-index.mjs --check
+```
+
+A `--check` nem módosít fájlokat. Az automatikus ellenőrzés a tartalomjegyzék
+helyességét vizsgálja; a döntések jelentését és jóváhagyását az agent továbbra is
+a teljes forrásokból ellenőrzi. Részletek: [az index frissítése](docs/knowledge/README.md).
 Külön worktree vagy gép esetén a fájlokat a Git-folyamatotokkal is szinkronizálni kell.
 
 ## Felépítés
@@ -58,7 +71,8 @@ ai-repo-memory/
 ├── AGENTS.md                 közös, rövid munkaszabályok
 ├── CLAUDE.md                 Claude-specifikus belépő
 ├── .agents/skills/           négy közös eljárás
-├── .agents/hooks/            közös tudásfrissítési program
+│   ├── record-decision/scripts/  az index generátora és ellenőrzője
+│   └── refresh-repo-knowledge/scripts/  a skill saját hookprogramjai
 ├── .claude/                  projektbeállítás és skillbelépők
 ├── .codex/                   projektmemória- és hookbeállítás
 ├── docs/project.md           a saját projekt kitöltendő adatai
@@ -67,11 +81,11 @@ ai-repo-memory/
 ├── docs/agent-setup.md        a kliensek beállítása
 ├── docs/instruction-loading.md  betöltés és ellenőrzés
 ├── docs/hooks.md             a négy hook működése és ellenőrzése
-└── tests/knowledge-hooks.test.mjs  a hookfolyamat tesztjei
+└── tests/                    a hookfolyamat és az indexgenerátor tesztjei
 ```
 
 A termék- és architektúradokumentumok mappái az első valódi tartalommal jönnek létre.
-Az indexben csak hivatkozás és téma szerepel; a verzió és státusz kanonikus helye a forrás.
+Az indexben cím, hivatkozás és mappa szerepel; a verzió és státusz kanonikus helye a forrás.
 
 ## Mire ad alapot?
 

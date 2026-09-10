@@ -1,7 +1,8 @@
 # Tudásfrissítés workspace-hookokkal
 
 A repo négy eseménynél ellenőrzi, szükséges-e a projekttudás újraolvasása.
-A Claude és Codex saját beállítása ugyanazt a függőségmentes Node-programot futtatja.
+A Claude és Codex saját beállítása a frissítő skill két rövid belépőjét futtatja;
+ezek ugyanazt a függőségmentes változásellenőrzőt használják.
 A hook jelzi a frissítés szükségességét; a forrásokat a meglévő
 [refresh-repo-knowledge](../.agents/skills/refresh-repo-knowledge/SKILL.md) workflow olvassa el.
 
@@ -10,7 +11,8 @@ A hook jelzi a frissítés szükségességét; a forrásokat a meglévő
 1. A hookos részhez legyen **Node 22+** az agentfolyamat PATH-ján. Nem kell npm
    install, MCP, hálózati kapcsolat vagy külön háttérszolgáltatás.
 2. Meglévő repóban egyesítsd a `.claude/settings.json` és `.codex/hooks.json`
-   saját hookbejegyzéseit. A közös program: `.agents/hooks/repo-knowledge.mjs`.
+   saját hookbejegyzéseit. A programok a `.agents/skills/refresh-repo-knowledge/scripts/`
+   mappában vannak: `claude.mjs`, `codex.mjs` és a közös `knowledge.mjs`.
 3. A kliensben tekintsd át és engedélyezd a workspace-et és a hookokat, ahol ezt
    a host kéri. Codex CLI-ben a `/hooks` mutatja a felismerést és trustot.
    A fájl jelenléte vagy a saját doctor kimenete nem helyettesíti ezt.
@@ -33,6 +35,57 @@ hookot ne törölj. A programot és a dokumentációt nem szükséges eltávolí
 Claude-nál a kimenet `hookSpecificOutput.additionalContext`. Codexnél ugyanez
 használatos a három kezdő/eszközeseménynél; a Stop `decision: block` és `reason`
 mezőkkel kér folytatást. Ez nem eszközjóváhagyási kérés.
+
+## Miért nem csak egy skill neve szerepel a hookban?
+
+A skill eljárásleírás az agentnek; a lifecycle-hookot a kliens futtatja, és nem
+ismer közös `type: skill` kezelőt. Codexben a `command` és `mcp_tool` támogatott,
+a `prompt` és `agent` kezelőt a jelenlegi dokumentáció szerint kihagyja.
+A Claude prompt-hook külön értékelést végez, nem a fő sessionben indít skillt.
+Ezért a hook futtatható belépőt hív, amely a skill követését kéri a modelltől.
+
+A script, állapotkezelés és kliensenkénti kimenet a skill könyvtárában marad.
+A hookbeállításban nincs vendorparaméter. Claude-nál a projektgyökér-változó
+rövid hivatkozást tesz lehetővé. A Codex parancsában csak a gyökérkereső indítás
+marad: a kliens a session munkakönyvtárából indít, ami almappa is lehet.
+Ezért a belépőt felfelé keresi; nem igényel Git-parancsot, telepített globális
+segédet vagy géphez kötött abszolút útvonalat. A frissítési logika nincs a JSON-ban.
+
+A két kimeneti adapter szándékos: Claude Stop alatt az `additionalContext`
+normál visszajelzésként jelenik meg, míg a `decision: block` hookhibaként látszana.
+Codex Stop alatt viszont ez utóbbi kéri a folytatást. Az eltérést a skill rejti el
+a konfiguráció és a közös eljárás elől.
+
+## Mit kap meg a modell?
+
+Eszközművelet után a kliens a hook stdout-ján kapott JSON-ból olvassa ki a jelzést:
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "REPO_KNOWLEDGE_REFRESH: Read .agents/skills/refresh-repo-knowledge/SKILL.md and follow its workflow in this checkout before finalizing."
+  }
+}
+```
+
+Ez a tényleges üzenet rövidített részlete. A kliens a következő modellkérés
+kontextusához adja. A modell ezután saját fájlolvasó eszközével végzi el a skillben
+leírt olvasást. A hook nem hajtja végre a skillt, és nem helyettesíti az olvasást.
+
+## Keresés és változásellenőrzés
+
+Az agent a generált `docs/knowledge/INDEX.md` címei és hivatkozásai alapján
+választ dokumentumot. Ha ez nem elég, célzott szöveges keresést végez a tudástárban,
+majd a releváns dokumentumokat teljes egészükben olvassa el. A tudástárat módosító
+agent a `record-decision` skill indexgenerátorát futtatja; a `validate-knowledge`
+ellenőrző módban vizsgálja, hogy a tartalomjegyzék egyezik-e a forrásokkal.
+Az embernek nem kell indexsorokat karbantartania. A starter jelenlegi keresési
+eljárása ezt a navigációt és a fájlos keresést használja.
+
+Ettől külön művelet a hook lenyomatképzése: minden hookellenőrzés beolvassa a figyelt
+Markdown-fájlok bájtjait, hogy a változást észlelje. Ezek nem kerülnek a modell
+kontextusába; a modellnek csak a kiválasztott forrásokat kell feldolgoznia.
 
 ## A változástól a friss tudásig
 
@@ -72,7 +125,7 @@ oda kell kerülniük a csapat szokásos folyamatával.
 A repo gyökerében:
 
 ```text
-node .agents/hooks/repo-knowledge.mjs --doctor
+node .agents/skills/refresh-repo-knowledge/scripts/claude.mjs --doctor
 node --test tests/knowledge-hooks.test.mjs
 ```
 

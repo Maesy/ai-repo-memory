@@ -1,6 +1,6 @@
 ---
 name: validate-knowledge
-description: "Review changed knowledge documents for routing, status, version, links, approval evidence and consistency before reporting the knowledge change ready; does not run a built-in validator."
+description: "Review changed knowledge documents for routing, status, version, links, approval evidence and consistency before reporting completion; run the generated-index check and review source meaning separately."
 ---
 
 <!-- adapter: workflow lives in the canonical skill -->

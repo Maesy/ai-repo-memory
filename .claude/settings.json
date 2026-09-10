@@ -8,8 +8,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/repo-knowledge.mjs",
-              "claude"
+              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
             ],
             "timeout": 5
           }
@@ -23,8 +22,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/repo-knowledge.mjs",
-              "claude"
+              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
             ],
             "timeout": 5
           }
@@ -38,8 +36,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/repo-knowledge.mjs",
-              "claude"
+              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
             ],
             "timeout": 5
           }
@@ -53,8 +50,7 @@
             "type": "command",
             "command": "node",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/hooks/repo-knowledge.mjs",
-              "claude"
+              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
             ],
             "timeout": 5
           }
