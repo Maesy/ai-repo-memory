@@ -1,0 +1,8 @@
+# Project-local memory settings; effective only in a trusted, supporting client.
+# Does not choose a model or alter global settings, permissions or stored memories.
+[features]
+memories = false
+
+[memories]
+generate_memories = false
+use_memories = false

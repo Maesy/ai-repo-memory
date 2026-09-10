@@ -1,0 +1,10 @@
+# Local agent data and secrets. Add your application's own build exclusions.
+.agent-runtime/
+.claude/settings.local.json
+.codex/config.local.toml
+.env
+.env.*
+!.env.example
+*.local.log
+.DS_Store
+Thumbs.db
