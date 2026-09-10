@@ -31,7 +31,8 @@ A PRD az elvárást mutatja; a döntésrekord azt indokolja, miért ezt választ
 ## Folytatás és több agent
 
 A `refresh-repo-knowledge` skill újraolvastatja a jelenlegi feladathoz szükséges
-forrásokat. Az alapban nincs automatikus figyelő vagy eseményfolyam.
+forrásokat. A mellékelt hookok lifecycle-eseményeknél jelezhetik a frissítés
+szükségességét; nincs folyamatos háttérfigyelő vagy agent–agent eseményfolyam.
 Új session, folytatás, kontextustömörítés és feladatváltás után ellenőrizni kell
 a forrásokat akkor is, ha az agent emlékezni vél rájuk.
 
@@ -39,4 +40,4 @@ Másik branch, worktree vagy gép tartalma csak a Git-szinkron után elérhető 
 Az értesítés nem viszi át a fájlokat, és nem bizonyítja az elolvasásukat.
 Az agent ne szinkronizáljon automatikusan mások helyi módosításaira.
 
-További lehetőségek és korlátok: [opcionális automatizálás](../automation.md).
+Működés és korlátok: [workspace-hookok](../hooks.md).

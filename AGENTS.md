@@ -1,7 +1,8 @@
 # Shared project instructions
 
-This is a technology-neutral project starter. It has no required package manager,
-runtime, background service or executable hook. Use the project's own toolchain.
+This is a technology-neutral project starter with optional, configured Claude and
+Codex knowledge hooks. The file-based workflows need no runtime. The hooks need
+Node 22+ but no npm dependencies or background service. Use the project's own toolchain.
 
 ## Start and continue work
 
@@ -11,6 +12,10 @@ runtime, background service or executable hook. Use the project's own toolchain.
   then read the complete applicable sources. Cite their path, ID and version.
 - After continuation, compaction, task changes or branch changes, use
   `refresh-repo-knowledge`. Re-read relevant files in the current checkout.
+- On a `REPO_KNOWLEDGE_REFRESH` hook notice, read the complete canonical refresh
+  skill and applicable sources before finalizing. A hook notice is not approval,
+  an agent task, or evidence that a document was read. If hooks are unavailable,
+  follow the same workflow explicitly.
 - A file path or Markdown link is navigation, not an automatic import. Read the
   referenced file explicitly when the instruction calls for it. Do not depend on
   `@file` expansion in this file or in a shared skill.
@@ -33,6 +38,7 @@ runtime, background service or executable hook. Use the project's own toolchain.
 - Knowledge routing and lifecycle: [docs/knowledge/README.md](docs/knowledge/README.md).
 - Client setup: [docs/agent-setup.md](docs/agent-setup.md).
 - Instruction loading audit: [docs/instruction-loading.md](docs/instruction-loading.md).
+- Workspace hook setup and limitations: [docs/hooks.md](docs/hooks.md).
 - Canonical workflows: `.agents/skills/`. Claude adapters: `.claude/skills/`.
   Read the canonical file behind an adapter; do not recursively invoke its name.
 

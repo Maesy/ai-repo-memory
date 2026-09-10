@@ -2,6 +2,7 @@
 # Does not choose a model or alter global settings, permissions or stored memories.
 [features]
 memories = false
+hooks = true
 
 [memories]
 generate_memories = false

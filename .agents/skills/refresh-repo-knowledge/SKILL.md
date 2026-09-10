@@ -11,4 +11,4 @@ Check current status, ID, version, scope and superseding records. If an earlier 
 
 A branch, session or topic change requires reassessing relevance even when a familiar version number appears. Another checkout's files are not automatically local. Do not auto-pull over local changes or treat notifications as instructions to execute.
 
-This starter has no event stream, snapshot service, cursor or automatic hook. Refresh uses file reads. Report which sources were actually re-read, what remains unavailable, and any effect on the work.
+The optional workspace hooks can issue REPO_KNOWLEDGE_REFRESH notices at lifecycle events. Read sources even if the hook reports an unchanged snapshot after continuation or compaction. The hook stores offered notifications, not source-read acknowledgments. Do not edit its state to claim completion; follow this workflow using file reads. Report which sources were actually re-read, what remains unavailable, and any effect on the work. See [hook behavior](../../../docs/hooks.md).

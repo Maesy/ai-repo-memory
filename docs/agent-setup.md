@@ -8,8 +8,9 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
 1. Az új projekt tényleges gyökerét nyisd meg. Töltsd ki a [projektadatlapot](project.md).
 2. Indíts új sessiont a beállítások átvétele után. A már betöltött kontextus nem törlődik
    egy kapcsoló átállításától.
-3. Ellenőrizd a négy projektskill elérhetőségét. Nincs telepítőparancs, symlink,
-   kötelező plugin, MCP, Node, npm vagy Python.
+3. Ellenőrizd a négy projektskill elérhetőségét. A hookos automatizáláshoz Node 22+
+   és a kliens hook-trustja kell; npm install, MCP és külön plugin nem szükséges.
+   A kézi workflow Node nélkül is működik. [Hookbeállítás és próba](hooks.md).
 4. A választott modell maradhat a csapat bevált alapértéke. A repo nem ír elő modellt,
    gondolkodási szintet vagy teljes gépi hozzáférést.
 5. Végezd el az [instrukcióbetöltés ellenőrzését](instruction-loading.md), külön mindkét kliensben.
@@ -20,6 +21,8 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
 - A gyökér `CLAUDE.md` Claude-specifikus `@AGENTS.md` importot használ.
 - A projekt `.claude/settings.json` fájljában az `autoMemoryEnabled: false`
   a saját automatikus memória kikapcsolásának dokumentált beállítása.
+- Ugyanitt a négy lifecycle-hook a közös `.agents/hooks/repo-knowledge.mjs`
+  programot indítja. A repo gyökerét a Claude projektútvonalából veszi.
 - A `.claude/skills/` belépői a közös `.agents/skills/` fájlok teljes elolvasását kérik.
   Ezek követett normál fájlok, nem symlinkek. A workflow a közös forrásban él.
 - A skillválasztóban keresd a `find-repo-knowledge` nevet; ahol támogatott,
@@ -37,8 +40,9 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
   Az olvasási mód elemzésre alkalmas; a tudástár frissítéséhez fájlírás kell.
 - A skillválasztóban jelöld ki a `find-repo-knowledge` skillt. A CLI-ben
   `$find-repo-knowledge` is használható. Az app és a PATH-on elérhető CLI verziója eltérhet.
-- Nincs `.codex/hooks.json` a starterben. A tudás frissítését a közös eljárás vagy
-  egy kifejezett kérés kezdeményezi; automatikus értesítést nem állítunk be.
+- A `.codex/hooks.json` a négy tudásfrissítési hookot regisztrálja. A launcher
+  almappából is megkeresi a közös programot. Normál kliens-trust és saját
+  működési próba szükséges; globális trust-felülírást nem állítunk be.
 
 ## Első ellenőrző kérés
 

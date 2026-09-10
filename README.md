@@ -2,7 +2,8 @@
 
 **Közös instrukciók és verziókezelt projekttudás Claude Code és Codex számára.**
 Kotlin-, Java-, .NET-, Python-, webes vagy más projekthez is használható.
-A starterhez nem kell Node, npm, Python, telepítőscript vagy háttérszolgáltatás.
+A kézi tudáskezeléshez nem kell runtime. A mellékelt Claude- és Codex-hookokhoz
+Node 22+ szükséges; npm install, Python és háttérszolgáltatás nem kell.
 Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltételek.
 
 ## Indulás
@@ -12,7 +13,7 @@ Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltéte
 2. Töltsd ki a [projektadatlapot](docs/project.md): cél, technológia, saját build- és
    tesztparancsok, felelősök és korlátok.
 3. Nyisd meg a projekt gyökerét Claude Code-ban vagy Codexben. Kövesd az alábbi
-   beállításokat, majd indíts új sessiont.
+   beállításokat és a [hookok ellenőrzését](docs/hooks.md), majd indíts új sessiont.
 4. Kérd az [első ellenőrző feladatot](docs/agent-setup.md#első-ellenőrző-kérés).
    A starterben nincs előre elfogadott termékkövetelmény vagy fiktív jóváhagyás.
 5. Az első saját követelményt és döntést a [sablonokból](docs/templates/) rögzítsd.
@@ -24,9 +25,9 @@ Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltéte
 | --- | --- | --- |
 | Belépési pont | `CLAUDE.md`, benne `@AGENTS.md` import | `AGENTS.md` közvetlen betöltése |
 | Projektskill | `.claude/skills/` vékony belépők | `.agents/skills/` közös forrás |
-| Projektbeállítás | `.claude/settings.json` | `.codex/config.toml` |
+| Projektbeállítás | `.claude/settings.json` | `.codex/config.toml` és `.codex/hooks.json` |
 | Automatikus memória | `autoMemoryEnabled: false` | `generate_memories = false`, `use_memories = false` |
-| Frissítés | Közös skill, szükség esetén kifejezett kérés | Közös skill, szükség esetén kifejezett kérés |
+| Frissítés | Lifecycle-hook jelzése → közös skill és forrásolvasás | Lifecycle-hook jelzése → közös skill és forrásolvasás |
 
 A projektkonfiguráció hatása a kliens támogatásától és bizalmi állapotától függ.
 
@@ -57,14 +58,16 @@ ai-repo-memory/
 ├── AGENTS.md                 közös, rövid munkaszabályok
 ├── CLAUDE.md                 Claude-specifikus belépő
 ├── .agents/skills/           négy közös eljárás
+├── .agents/hooks/            közös tudásfrissítési program
 ├── .claude/                  projektbeállítás és skillbelépők
-├── .codex/config.toml        projektmemória-beállítás
+├── .codex/                   projektmemória- és hookbeállítás
 ├── docs/project.md           a saját projekt kitöltendő adatai
 ├── docs/knowledge/           index, használat és karbantartás
 ├── docs/templates/           követelmény- és döntéssablon
 ├── docs/agent-setup.md        a kliensek beállítása
 ├── docs/instruction-loading.md  betöltés és ellenőrzés
-└── docs/automation.md        képességek és választható bővítések
+├── docs/hooks.md             a négy hook működése és ellenőrzése
+└── tests/knowledge-hooks.test.mjs  a hookfolyamat tesztjei
 ```
 
 A termék- és architektúradokumentumok mappái az első valódi tartalommal jönnek létre.
@@ -78,9 +81,12 @@ Az indexben csak hivatkozás és téma szerepel; a verzió és státusz kanoniku
 - A jó működéshez továbbra is kell pontos feladat, teszt és review. A fájl jelenléte,
   betöltése és helyes alkalmazása három külön állítás; tökéletes agentműködést nem garantálunk.
 
-A gépi katalógus, hash, eseményfolyam és hook külön, opcionális automatizálás:
-[képességek és korlátok](docs/automation.md).
-Agentek közötti üzenetváltáshoz: [a codex-mcp-bridge értékelése](docs/agent-communication.md).
+Az opcionális [hookos automatizálás](docs/hooks.md) a projektadatlap és a
+tudásfájlok változását észleli. A jelzés nem jelent jóváhagyást, forrásolvasási
+nyugtát vagy közvetlen agent–agent üzenetküldést. Hook nélkül kifejezetten kérd a frissítő skillt.
+
+Az A2A-alapú kommunikáció az AI-alkalmazások eltérései és a jelenleg nem teljes
+támogatás miatt egy következő előadás témája lehet.
 
 Az elméleti előadás külön, `ai-workshop-presentation` nevű repóban található.
 Gyakorlati alkalom később, igény szerint tartható.

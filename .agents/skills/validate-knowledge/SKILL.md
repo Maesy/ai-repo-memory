@@ -11,4 +11,4 @@ Check unique IDs, appropriate type/location, applicable status, version changes,
 
 Compare requirements with relevant implementation/test evidence only when available. State what was checked, the concrete findings and what remains uncertain. A structure check does not prove business correctness or successful client loading.
 
-This starter has no executable schema validator or test runner. Use the project's own verified checks if configured in docs/project.md. Otherwise report a document review, not successful automated tests. Fix in-scope, authorized inconsistencies; ask for unresolved product choices rather than silently deciding.
+This starter has no executable knowledge schema validator. Its hook tests validate notification behavior, not business requirements or document approval. Use the project's own verified checks if configured in docs/project.md. Otherwise report a document review, not successful automated tests. Fix in-scope, authorized inconsistencies; ask for unresolved product choices rather than silently deciding.
