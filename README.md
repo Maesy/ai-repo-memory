@@ -14,6 +14,8 @@ Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltéte
    tesztparancsok, felelősök és korlátok.
 3. Nyisd meg a projekt gyökerét Claude Code-ban vagy Codexben. Kövesd az alábbi
    beállításokat és a [hookok ellenőrzését](docs/hooks.md), majd indíts új sessiont.
+   Codexben minden fejlesztőnek külön át kell néznie és jóvá kell hagynia a
+   projekt hookjait; a repo nem nyilváníthatja megbízhatóvá saját magát.
 4. Kérd az [első ellenőrző feladatot](docs/agent-setup.md#első-ellenőrző-kérés).
    A starterben nincs előre elfogadott termékkövetelmény vagy fiktív jóváhagyás.
 5. Az első saját követelményt és döntést a [sablonokból](docs/templates/) rögzítsd.
@@ -80,7 +82,7 @@ ai-repo-memory/
 ├── docs/templates/           követelmény- és döntéssablon
 ├── docs/agent-setup.md        a kliensek beállítása
 ├── docs/instruction-loading.md  betöltés és ellenőrzés
-├── docs/hooks.md             a négy hook működése és ellenőrzése
+├── docs/hooks.md             a hookok működése, trustja és ellenőrzése
 └── tests/                    a hookfolyamat és az indexgenerátor tesztjei
 ```
 
@@ -96,14 +98,10 @@ Az indexben cím, hivatkozás és mappa szerepel; a verzió és státusz kanonik
   betöltése és helyes alkalmazása három külön állítás; tökéletes agentműködést nem garantálunk.
 
 Az opcionális [hookos automatizálás](docs/hooks.md) a projektadatlap és a
-tudásfájlok változását észleli. A jelzés nem jelent jóváhagyást, forrásolvasási
-nyugtát vagy közvetlen agent–agent üzenetküldést. Hook nélkül kifejezetten kérd a frissítő skillt.
-
-Az A2A-alapú kommunikáció az AI-alkalmazások eltérései és a jelenleg nem teljes
-támogatás miatt egy következő előadás témája lehet.
-
-Az elméleti előadás külön, `ai-workshop-presentation` nevű repóban található.
-Gyakorlati alkalom később, igény szerint tartható.
+tudásfájlok változását észleli mindkét kliensben. A jelzés nem jelent jóváhagyást,
+forrásolvasási nyugtát vagy közvetlen agent–agent üzenetküldést. Hook nélkül
+kifejezetten kérd a frissítő skillt. A helyi trust- és policy-állapot nem kerül
+a repóba; a két kliensben külön ellenőrizd a tényleges futást.
 
 Starter-változat: [STARTER_VERSION](STARTER_VERSION). A forrásokra és kliensbeállításokra
 vonatkozó ellenőrzési dátum a részletes útmutatóban szerepel. [Licenc](LICENSE).

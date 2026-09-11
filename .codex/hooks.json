@@ -29,19 +29,7 @@
     ],
     "PostToolUse": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node -e \"const f=require('node:fs'),p=require('node:path'),s='.agents/skills/refresh-repo-knowledge/scripts/codex.mjs';let r=process.cwd();while(!f.existsSync(p.join(r,s))){const n=p.dirname(r);if(n===r)throw Error('Repository hook not found');r=n;}import(require('node:url').pathToFileURL(p.join(r,s)).href)\"",
-            "commandWindows": "node -e \"const f=require('node:fs'),p=require('node:path'),s='.agents/skills/refresh-repo-knowledge/scripts/codex.mjs';let r=process.cwd();while(!f.existsSync(p.join(r,s))){const n=p.dirname(r);if(n===r)throw Error('Repository hook not found');r=n;}import(require('node:url').pathToFileURL(p.join(r,s)).href)\"",
-            "timeout": 5,
-            "statusMessage": "Repo knowledge check"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",

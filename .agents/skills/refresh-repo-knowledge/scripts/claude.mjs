@@ -1,4 +1,4 @@
 import { main } from './knowledge.mjs';
 
-// Claude displays Stop additionalContext as ordinary feedback, without a hook error.
+// Client-specific entry point; shared refresh behavior lives in knowledge.mjs.
 await main('claude');

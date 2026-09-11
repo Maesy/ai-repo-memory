@@ -1,6 +1,6 @@
 # Claude és Codex beállítása
 
-Ellenőrzött dokumentáció: 2026-09-10. A kliensverzió, a szervezeti szabályok és a
+Ellenőrzött dokumentáció: 2026-09-11. A kliensverzió, a szervezeti szabályok és a
 konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres élő integrációt.
 
 ## Mindkét kliensnél
@@ -22,8 +22,9 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
 - A gyökér `CLAUDE.md` Claude-specifikus `@AGENTS.md` importot használ.
 - A projekt `.claude/settings.json` fájljában az `autoMemoryEnabled: false`
   a saját automatikus memória kikapcsolásának dokumentált beállítása.
-- Ugyanitt a négy lifecycle-hook a közös `.agents/skills/refresh-repo-knowledge/scripts/claude.mjs`
-  programot indítja. A repo gyökerét a Claude projektútvonalából veszi.
+- Ugyanitt három lifecycle-hook a közös `.agents/skills/refresh-repo-knowledge/scripts/claude.mjs`
+  programot indítja. A `PostToolUse` csak `Write|Edit` eszközre illeszkedik.
+  A repo gyökerét a Claude projektútvonalából veszi.
 - A `.claude/skills/` belépői a közös `.agents/skills/` fájlok teljes elolvasását kérik.
   Ezek követett normál fájlok, nem symlinkek. A workflow a közös forrásban él.
 - A skillválasztóban keresd a `find-repo-knowledge` nevet; ahol támogatott,
@@ -41,9 +42,10 @@ konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres él
   Az olvasási mód elemzésre alkalmas; a tudástár frissítéséhez fájlírás kell.
 - A skillválasztóban jelöld ki a `find-repo-knowledge` skillt. A CLI-ben
   `$find-repo-knowledge` is használható. Az app és a PATH-on elérhető CLI verziója eltérhet.
-- A `.codex/hooks.json` a négy tudásfrissítési hookot regisztrálja. A launcher
-  almappából is megkeresi a közös programot. Normál kliens-trust és saját
-  működési próba szükséges; globális trust-felülírást nem állítunk be.
+- A `.codex/hooks.json` három tudásfrissítési hookot regisztrál; a `PostToolUse`
+  csak `Write|Edit` eszközre illeszkedik. A launcher almappából is megkeresi a
+  közös `codex.mjs` programot. Normál kliens-trust és
+  saját működési próba szükséges; globális trust-felülírást nem állítunk be.
 
 ## Első ellenőrző kérés
 
@@ -76,6 +78,7 @@ elfogadott termékkövetelmény. Ne fogadd el a sablon példaazonosítóját val
 - [Codex instrukciók](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
 - [Codex skillek](https://learn.chatgpt.com/docs/build-skills)
 - [Codex memóriavezérlők](https://learn.chatgpt.com/docs/customization/memories)
+- [Codex hookok](https://learn.chatgpt.com/docs/hooks)
 
 A személyes memória kikapcsolása az összehasonlítható közös alapot segíti, de a
 kontextus, a history és a compaction más fogalom. Korábbi emlékeket nem kell törölni.

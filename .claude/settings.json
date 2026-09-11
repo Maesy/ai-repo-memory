@@ -31,20 +31,7 @@
     ],
     "PostToolUse": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
-            ],
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",

@@ -15,6 +15,8 @@ The optional workspace hooks can issue REPO_KNOWLEDGE_REFRESH notices at lifecyc
 
 ## Bundled hook scripts
 
-The client runs [scripts/claude.mjs](scripts/claude.mjs) or [scripts/codex.mjs](scripts/codex.mjs) at configured lifecycle events. Both use [scripts/knowledge.mjs](scripts/knowledge.mjs) for change detection and session state. These small entrypoints encapsulate the client's response format; no vendor argument is needed in hook configuration.
+The client runs [scripts/claude.mjs](scripts/claude.mjs) or [scripts/codex.mjs](scripts/codex.mjs) at configured lifecycle events. Both use [scripts/knowledge.mjs](scripts/knowledge.mjs) for change detection and session state. These small entrypoints keep client-specific launching and vendor session state out of hook configuration; no vendor argument is needed there.
+
+When a `PostToolUse` notice follows an authorized knowledge edit owned by the current agent, also follow the complete `record-decision` and `validate-knowledge` skills: regenerate the index with the record-decision script, run its read-only `--check`, and review the changed document's meaning. When another process or agent owns the change, re-read it and report the effect without claiming ownership or editing it automatically. The hook only detects and routes; it does not perform these workflow steps.
 
 For a read-only freshness diagnostic, run `node .agents/skills/refresh-repo-knowledge/scripts/claude.mjs --doctor` from the repository root. This checks files and runtime availability, not hook trust or model delivery. During an ordinary refresh, read the sources directly; do not call the hook script or synthesize lifecycle events to claim that reading is complete.

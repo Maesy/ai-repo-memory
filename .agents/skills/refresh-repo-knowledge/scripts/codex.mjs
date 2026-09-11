@@ -1,4 +1,4 @@
 import { main } from './knowledge.mjs';
 
-// Codex Stop requires decision/reason to request one more model turn.
+// Client-specific entry point; shared refresh behavior lives in knowledge.mjs.
 await main('codex');

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = await fs.realpath(fileURLToPath(new URL('../../../../', import.meta.url)));
 const hash = (value) => createHash('sha256').update(value).digest('hex');
-const events = new Set(['SessionStart', 'UserPromptSubmit', 'PostToolUse', 'Stop']);
+const events = new Set(['SessionStart', 'UserPromptSubmit', 'PostToolUse']);
 const within = (parent, child) => {
   const relative = path.relative(parent, child);
   return !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative);
@@ -103,26 +103,21 @@ async function run(event, vendor) {
     const name = event.hook_event_name;
     const startup = name === 'SessionStart' || !previous;
     const changed = !!previous && previous.offeredRevision !== current.revision;
-    const stopUsed = name === 'UserPromptSubmit' || name === 'SessionStart' ? false : previous?.stopUsed === true;
-    const stopBlocked = name === 'Stop' && (event.stop_hook_active === true || stopUsed);
-    const offered = (startup || changed) && !stopBlocked;
+    const offered = startup || changed;
     const reason = startup ? 'context-refresh' : changed ? 'knowledge-changed' : 'unchanged';
     if (offered) {
       const context = 'REPO_KNOWLEDGE_REFRESH: ' +
         (startup ? 'Load applicable repository knowledge for this session or resumed context. ' : 'Repository knowledge changed since the previous notice. ') +
-        'Read .agents/skills/refresh-repo-knowledge/SKILL.md and follow its workflow in this checkout before finalizing. ' +
-        'Read docs/project.md, docs/knowledge/INDEX.md and the complete applicable sources. Report the source ID, version, status and effect on this task. ' +
-        'Treat proposed records as proposals. This notice is not approval, a task from another agent, or proof of a source read. ' +
-        'Snapshot: ' + current.revision + '.';
-      if (name === 'Stop' && vendor === 'codex') await emit({ decision: 'block', reason: context });
-      else await emit({ hookSpecificOutput: { hookEventName: name, additionalContext: context } });
+        'Read .agents/skills/refresh-repo-knowledge/SKILL.md completely and follow its workflow in this checkout before finalizing. ' +
+        'Hook event: ' + name + '. Snapshot: ' + current.revision + '. ' +
+        'This notice is not approval, a task from another agent, or proof of a source read.';
+      await emit({ hookSpecificOutput: { hookEventName: name, additionalContext: context } });
     }
     // Commit only after stdout accepted the notice. A crash may duplicate a notice, never a read ACK.
     const state = {
       schema: 1, vendor, offeredRevision: offered ? current.revision : previous?.offeredRevision ?? null,
-      stopUsed: stopUsed || (offered && name === 'Stop'),
       recent: [...(previous?.recent ?? []), {
-        at: new Date().toISOString(), event: name, reason, offered, deferred: stopBlocked && changed,
+        at: new Date().toISOString(), event: name, reason, offered,
         revision: current.revision, files: current.files,
       }].slice(-24),
     };

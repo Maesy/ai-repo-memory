@@ -1,7 +1,8 @@
 # Hookkal jelzett tudásfrissítés
 
-Történeti kutatási jegyzet az implementáció előtti állapotról. A starter 1.1.0
-aktuális megoldása és korlátai a [hookútmutatóban](../hooks.md) szerepelnek.
+Történeti kutatási jegyzet az implementáció előtti állapotról és az akkori
+javaslatokról. Az 1.3.0 aktuális, háromhookos megoldása és korlátai a
+[hookútmutatóban](../hooks.md) szerepelnek; az alábbi `Stop`-tervet ez felülírta.
 
 Állapot: **kutatási eredmény és javaslat**, nem elfogadott követelmény vagy telepített funkció.
 Ellenőrizve: **2026-09-10**, Windows. A próbaprogramok a workshop külön
@@ -115,7 +116,7 @@ A rövid JSON-bizonyítékok az ottani `evidence/` alatt:
 Ezek nem a starterbe telepített vagy publikált csomagfájlok. A nyers tesztadatok
 a próbacsomag kizárt `contexts/` könyvtárában maradnak.
 
-## Javasolt minimális kiegészítő
+## Történetileg javasolt minimális kiegészítő
 
 1. **Közös változásellenőrző, vékony hostadapterek.** TypeScriptben készíteném,
    saját csomagolt runtime-mal. A kutatási fixture egyszerű JavaScript/Node;
@@ -130,9 +131,10 @@ a próbacsomag kizárt `contexts/` könyvtárában maradnak.
 4. **Rövid, csoportosított jelzés.** Üres állapotban csend; változáskor korlátozott
    méretű saját szöveg a kanonikus workflow elolvasására. A forrástartalom és az
    opcionális reposablon adatként olvasható, nem injektált magas prioritású szabály.
-5. **PostToolUse és lezárási tartalékellenőrzés.** A Stop legfeljebb egyszer
-   kérjen plusz frissítési kört turnönként; a további változás maradjon függőben
-   a következő eseményre. Ne generáljon végtelen folytatást.
+5. **PostToolUse és lezárási tartalékellenőrzés.** Az akkori terv a `Stop` hookkal
+   legfeljebb egy plusz frissítési kört engedett volna turnönként. Az 1.3.0 ezt a
+   bonyolult és hurokveszélyes tartalékot nem regisztrálja; a következő
+   `UserPromptSubmit` vagy `SessionStart` veszi fel a függő változást.
 6. **Választható telepítés és diagnosztika.** Saját hookbejegyzések strukturált
    hozzáadása, szükséges host-trust, session-újraindítás. A doctor külön ellenőrzi
    a konfigurációt, a hook futását és a modellhez jutást. A starter kézzel
