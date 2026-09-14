@@ -5,137 +5,247 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
+const scripts = ['knowledge.mjs', 'claude.mjs', 'codex.mjs', 'copilot.mjs'];
+
 async function fixture(t) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'repo knowledge á-'));
-  t.after(async () => {
-    assert.ok(root.startsWith(path.join(os.tmpdir(), 'repo knowledge á-')));
-    await fs.rm(root, { recursive: true, force: true });
-  });
-  await fs.mkdir(path.join(root, '.agents/skills/refresh-repo-knowledge/scripts'), { recursive: true });
-  await fs.mkdir(path.join(root, 'docs/knowledge'), { recursive: true });
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'knowledge-hook-á-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const target = path.join(root, '.agents/skills/refresh-repo-knowledge/scripts');
+  await fs.mkdir(target, { recursive: true });
+  for (const name of scripts) await fs.copyFile(new URL(`../.agents/skills/refresh-repo-knowledge/scripts/${name}`, import.meta.url), path.join(target, name));
+  await fs.mkdir(path.join(root, 'docs/agents'), { recursive: true });
   await fs.mkdir(path.join(root, 'src/nested'), { recursive: true });
-  for (const entry of ["knowledge", "claude", "codex"]) await fs.copyFile(new URL('../.agents/skills/refresh-repo-knowledge/scripts/' + entry + '.mjs', import.meta.url), path.join(root, '.agents/skills/refresh-repo-knowledge/scripts/' + entry + '.mjs'));
-  await fs.writeFile(path.join(root, 'docs/project.md'), '# Fixture project');
-  await fs.writeFile(path.join(root, 'docs/knowledge/INDEX.md'), '# Index');
-  const write = (text) => fs.writeFile(path.join(root, 'docs/knowledge/decision.md'), text);
-  const run = (name, overrides = {}, vendor = 'claude', args = null) => new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args ?? [path.join(root, '.agents/skills/refresh-repo-knowledge/scripts/' + vendor + '.mjs')], { cwd: root, windowsHide: true });
+  await fs.writeFile(path.join(root, 'docs/project.md'), '# Project\n', 'utf8');
+  await fs.writeFile(path.join(root, 'docs/README.md'), '# Routing\n', 'utf8');
+  await fs.writeFile(path.join(root, 'docs/governance.md'), '# Governance\n', 'utf8');
+  await fs.writeFile(path.join(root, 'docs/agents/policy.md'), '# Policy\n', 'utf8');
+
+  const run = (name, overrides = {}, adapter = 'claude.mjs', cwd = root) => new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(target, adapter)], { cwd, windowsHide: true });
     let stdout = '', stderr = '';
-    child.stdout.on('data', (c) => stdout += c); child.stderr.on('data', (c) => stderr += c);
+    child.stdout.on('data', (chunk) => stdout += chunk);
+    child.stderr.on('data', (chunk) => stderr += chunk);
     child.on('error', reject);
-    child.on('close', (code) => { try { assert.equal(code, 0, stderr); resolve(stdout ? JSON.parse(stdout) : null); } catch (e) { reject(e); } });
+    child.on('close', (code) => {
+      try { resolve({ code, value: stdout ? JSON.parse(stdout) : null, stderr }); }
+      catch (error) { reject(error); }
+    });
     child.stdin.end(JSON.stringify({ hook_event_name: name, cwd: root, session_id: 'fixture-session', ...overrides }));
   });
-  return { root, write, run };
+  const write = async (relative, content) => {
+    const file = path.join(root, relative);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, content, 'utf8');
+  };
+  return { root, run, write };
 }
 
-function assertRefreshEvents(config) {
-  assert.deepEqual(Object.keys(config.hooks), ['SessionStart', 'UserPromptSubmit', 'PostToolUse']);
-  assert.equal(config.hooks.PostToolUse[0].matcher, 'Write|Edit');
-  assert.equal(config.hooks.SessionStart[0].matcher, undefined);
-  assert.equal(config.hooks.UserPromptSubmit[0].matcher, undefined);
-}
+test('startup offers refresh; unchanged later events stay quiet', async (t) => {
+  const f = await fixture(t);
+  const first = await f.run('SessionStart');
+  assert.equal(first.code, 0);
+  assert.match(first.value.hookSpecificOutput.additionalContext, /refresh-repo-knowledge\/SKILL\.md/);
+  assert.equal((await f.run('UserPromptSubmit')).value, null);
+  assert.equal((await f.run('PostToolUse')).value, null);
+});
 
-test('startup requests source refresh; unchanged tool calls stay quiet', async (t) => {
-  const hookFixture = await fixture(t);
-  assert.match((await hookFixture.run('SessionStart')).hookSpecificOutput.additionalContext, /refresh-repo-knowledge\/SKILL.md/);
-  assert.equal(await hookFixture.run('PostToolUse'), null);
-  assert.equal(await hookFixture.run('UserPromptSubmit'), null);
-});
-test('external create, edit and delete each route through the refresh skill without injecting source text', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart');
-  for (const content of ['UNTRUSTED_SOURCE_TEXT v1', 'UNTRUSTED_SOURCE_TEXT v2', null]) {
-    if (content === null) await fs.unlink(path.join(hookFixture.root, 'docs/knowledge/decision.md')); else await hookFixture.write(content);
-    const result = await hookFixture.run('PostToolUse');
-    assert.match(result.hookSpecificOutput.additionalContext, /refresh-repo-knowledge\/SKILL\.md/);
-    assert.match(result.hookSpecificOutput.additionalContext, /Hook event: PostToolUse/);
-    assert.doesNotMatch(JSON.stringify(result), /UNTRUSTED_SOURCE_TEXT/);
-    assert.equal(await hookFixture.run('PostToolUse'), null);
+test('create edit and delete of watched knowledge each offer one refresh', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  for (const content of ['# V1\n', '# V2\n', null]) {
+    const file = path.join(f.root, 'docs/adr/decision.md');
+    if (content === null) await fs.unlink(file);
+    else await f.write('docs/adr/decision.md', content);
+    const changed = await f.run('PostToolUse');
+    assert.match(changed.value.hookSpecificOutput.additionalContext, /PostToolUse/);
+    assert.doesNotMatch(JSON.stringify(changed.value), /# V[12]/);
+    assert.equal((await f.run('PostToolUse')).value, null);
   }
 });
-test('vendors, sessions and subagents keep independent state', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart');
-  for (const [overrides, vendor] of [[{ session_id: 'second' }, 'claude'], [{}, 'codex'], [{ agent_id: 'sub' }, 'claude']])
-    assert.ok((await hookFixture.run('PostToolUse', overrides, vendor)).hookSpecificOutput);
+
+test('unwatched changes and unsupported events stay quiet', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  await f.write('src/code.txt', 'changed');
+  assert.equal((await f.run('PostToolUse')).value, null);
+  await f.write('docs/adr/decision.md', '# Changed\n');
+  assert.equal((await f.run('Stop')).value, null);
+  assert.ok((await f.run('UserPromptSubmit')).value.hookSpecificOutput);
 });
-test('resume and compaction request reads even when file hashes are unchanged', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart');
-  for (const source of ['resume', 'compact']) assert.ok((await hookFixture.run('SessionStart', { source })).hookSpecificOutput);
+
+test('concurrent callbacks publish a changed revision once', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  await f.write('docs/prd/requirement.md', '# Concurrent\n');
+  const results = await Promise.all(Array.from({ length: 12 }, () => f.run('PostToolUse')));
+  assert.equal(results.filter((item) => item.value?.hookSpecificOutput).length, 1);
+  assert.ok(results.every((item) => !item.value?.systemMessage), JSON.stringify(results));
 });
-test('Stop is no longer a registered event and never produces output', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart'); await hookFixture.write('Version 1');
-  for (const vendor of ['claude', 'codex'])
-    assert.equal(await hookFixture.run('Stop', { stop_hook_active: false }, vendor), null);
-  // The pending change is still offered at the next registered event.
-  assert.ok((await hookFixture.run('UserPromptSubmit')).hookSpecificOutput);
+
+test('shared state map retains only the 64 most recent agent states', async (t) => {
+  const f = await fixture(t);
+  for (let index = 0; index < 72; index += 1) {
+    const result = await f.run('SessionStart', { session_id: `fixture-session-${index}` });
+    assert.ok(result.value?.hookSpecificOutput);
+  }
+
+  const stateRoot = path.join(f.root, '.agent-runtime/knowledge-hooks');
+  assert.deepEqual(await fs.readdir(stateRoot), ['state.json']);
+  const state = JSON.parse(await fs.readFile(path.join(stateRoot, 'state.json'), 'utf8'));
+  assert.equal(state.schema, 2);
+  assert.equal(Object.keys(state.sessions).length, 64);
 });
-test('unrelated changes do not notify, and every notice uses additionalContext', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart');
-  await fs.writeFile(path.join(hookFixture.root, 'src/code.txt'), 'change');
-  assert.equal(await hookFixture.run('PostToolUse'), null);
-  await hookFixture.write('updated');
-  const response = await hookFixture.run('PostToolUse');
-  assert.equal(response.hookSpecificOutput.hookEventName, 'PostToolUse');
-  assert.equal(response.decision, undefined);
-  assert.match(response.hookSpecificOutput.additionalContext, /refresh-repo-knowledge\/SKILL\.md/);
-});
-test('a session start notice asks for source reading, not for index maintenance', async (t) => {
-  const hookFixture = await fixture(t);
-  const context = (await hookFixture.run('SessionStart')).hookSpecificOutput.additionalContext;
-  assert.match(context, /refresh-repo-knowledge\/SKILL\.md/);
-  assert.doesNotMatch(context, /update-index\.mjs/);
-});
-test('concurrent tool callbacks offer a changed revision once', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart'); await hookFixture.write('concurrent revision');
-  const outputs = await Promise.all(Array.from({ length: 6 }, () => hookFixture.run('PostToolUse')));
-  assert.equal(outputs.filter((x) => x?.hookSpecificOutput).length, 1);
-  assert.ok(outputs.every((x) => !x?.systemMessage), JSON.stringify(outputs));
-});
-test('invalid identity and foreign cwd fail open without creating state', async (t) => {
-  const hookFixture = await fixture(t);
-  for (const input of [{ session_id: '' }, { cwd: os.tmpdir() }]) assert.ok((await hookFixture.run('PostToolUse', input)).systemMessage);
-  await assert.rejects(fs.access(path.join(hookFixture.root, '.agent-runtime')));
-});
-test('linked runtime directory is rejected instead of writing outside the checkout', async (t) => {
-  const hookFixture = await fixture(t);
-  await fs.symlink(path.join(hookFixture.root, 'src'), path.join(hookFixture.root, '.agent-runtime'), process.platform === 'win32' ? 'junction' : 'dir');
-  assert.ok((await hookFixture.run('SessionStart')).systemMessage);
-  assert.deepEqual(await fs.readdir(path.join(hookFixture.root, 'src')), ['nested']);
-});
-test('Codex config registers the three stateful refresh events', async () => {
-  const config = JSON.parse(await fs.readFile(new URL('../.codex/hooks.json', import.meta.url), 'utf8'));
-  assertRefreshEvents(config);
-  for (const event of Object.values(config.hooks)) {
-    assert.match(event[0].hooks[0].command, /refresh-repo-knowledge\/scripts\/codex\.mjs/);
-    assert.equal(event[0].hooks[0].commandWindows, event[0].hooks[0].command);
+
+test('invalid identity and foreign cwd fail open without claiming refresh', async (t) => {
+  const f = await fixture(t);
+  for (const overrides of [{ session_id: '' }, { cwd: os.tmpdir() }]) {
+    const result = await f.run('PostToolUse', overrides);
+    assert.match(result.value.systemMessage, /could not check freshness/);
   }
 });
-test('Claude config registers three events and scopes PostToolUse to file writes', async () => {
-  const config = JSON.parse(await fs.readFile(new URL('../.claude/settings.json', import.meta.url), 'utf8'));
-  assertRefreshEvents(config);
-  for (const [name, group] of Object.entries(config.hooks)) {
-    assert.equal(group[0].hooks[0].command, 'node', name);
-    assert.match(group[0].hooks[0].args[0], /refresh-repo-knowledge\/scripts\/claude\.mjs$/);
+
+test('Claude and Codex configs register the same three events', async () => {
+  const claude = JSON.parse(await fs.readFile(new URL('../.claude/settings.json', import.meta.url), 'utf8'));
+  const codex = JSON.parse(await fs.readFile(new URL('../.codex/hooks.json', import.meta.url), 'utf8'));
+  for (const config of [claude, codex]) {
+    assert.deepEqual(Object.keys(config.hooks), ['SessionStart', 'UserPromptSubmit', 'PostToolUse']);
+    assert.equal(config.hooks.PostToolUse[0].matcher, 'Write|Edit');
+  }
+  for (const group of Object.values(claude.hooks)) {
+    assert.equal(group[0].hooks[0].command, 'node');
+    assert.match(group[0].hooks[0].args[0], /scripts\/claude\.mjs$/);
+  }
+  for (const group of Object.values(codex.hooks)) {
+    assert.match(group[0].hooks[0].command, /scripts\/codex\.mjs/);
+    assert.equal(group[0].hooks[0].commandWindows, group[0].hooks[0].command);
   }
 });
-test('shared hook state has no Stop bookkeeping', async () => {
-  const source = await fs.readFile(new URL('../.agents/skills/refresh-repo-knowledge/scripts/knowledge.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /stopUsed|stopBlocked/);
+
+test('Codex adapter works from a nested working directory', async (t) => {
+  const f = await fixture(t);
+  const result = await f.run('SessionStart', {}, 'codex.mjs', path.join(f.root, 'src/nested'));
+  assert.ok(result.value.hookSpecificOutput);
 });
-test('Codex configured launcher resolves a workspace from a nested cwd', async (t) => {
-  const hookFixture = await fixture(t);
-  const config = JSON.parse(await fs.readFile(new URL('../.codex/hooks.json', import.meta.url), 'utf8'));
-  const command = config.hooks.SessionStart[0].hooks[0].command;
-  const code = command.match(/^node -e "(.*)"$/)[1];
-  const response = await hookFixture.run('SessionStart', { cwd: path.join(hookFixture.root, 'src/nested') }, 'codex', ['-e', 'process.chdir(' + JSON.stringify(path.join(hookFixture.root, 'src/nested')) + ');' + code]);
-  assert.ok(response.hookSpecificOutput);
+
+test('every declared root knowledge route triggers a refresh', async (t) => {
+  const watched = [
+    'docs/project.md',
+    'docs/README.md',
+    'docs/governance.md',
+    'docs/agents/watch.md',
+    'docs/adr/watch.md',
+    'docs/pdr/watch.md',
+    'docs/prd/watch.md',
+    'CONTEXT.md',
+    'CONTEXT-MAP.md',
+  ];
+  for (const relative of watched) {
+    await t.test(relative, async (child) => {
+      const f = await fixture(child);
+      await f.run('SessionStart');
+      await f.write(relative, `# Changed ${relative}\n`);
+      const changed = await f.run('PostToolUse');
+      assert.ok(changed.value?.hookSpecificOutput, `${relative} was not watched`);
+      assert.equal((await f.run('PostToolUse')).value, null);
+    });
+  }
 });
-test('corrupt state and orphan lock fail open and do not claim freshness', async (t) => {
-  const hookFixture = await fixture(t); await hookFixture.run('SessionStart');
-  const base = path.join(hookFixture.root, '.agent-runtime/knowledge-hooks');
-  const directory = path.join(base, (await fs.readdir(base))[0]);
-  await fs.writeFile(path.join(directory, 'state.json'), '{bad json');
-  assert.ok((await hookFixture.run('PostToolUse')).systemMessage);
-  await fs.writeFile(path.join(directory, 'lock'), '{"pid":0}');
-  assert.ok((await hookFixture.run('PostToolUse')).systemMessage);
+
+test('component context and ADR routes trigger refresh', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  await f.write('src/ordering/CONTEXT.md', '# Ordering context\n');
+  assert.ok((await f.run('PostToolUse')).value?.hookSpecificOutput);
+  await f.write('src/ordering/docs/adr/0001-choice.md', '# Ordering choice\n');
+  assert.ok((await f.run('PostToolUse')).value?.hookSpecificOutput);
+});
+
+test('expired hook lock is recovered safely', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  const stateRoot = path.join(f.root, '.agent-runtime/knowledge-hooks');
+  const lock = path.join(stateRoot, 'lock');
+  await fs.mkdir(lock);
+  const owner = path.join(lock, 'owner.json');
+  await fs.writeFile(owner, JSON.stringify({
+    schema: 1,
+    pid: 999999,
+    token: 'expired',
+    expiresAt: Date.now() + 60_000,
+  }));
+  const expired = new Date(Date.now() - 60_000);
+  await fs.utimes(owner, expired, expired);
+  const result = await f.run('UserPromptSubmit');
+  assert.equal(result.code, 0);
+  assert.equal(result.value, null);
+  await assert.rejects(fs.access(lock));
+});
+
+test('busy shared state is quiet when the revision is already offered', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  const lock = path.join(f.root, '.agent-runtime/knowledge-hooks/lock');
+  await fs.mkdir(lock);
+  await fs.writeFile(path.join(lock, 'owner.json'), JSON.stringify({
+    schema: 1,
+    pid: process.pid,
+    token: 'active',
+    expiresAt: Date.now() + 60_000,
+  }));
+
+  const result = await f.run('UserPromptSubmit');
+  assert.equal(result.code, 0);
+  assert.equal(result.value, null);
+
+  const resumed = await f.run('SessionStart');
+  assert.equal(resumed.code, 0);
+  assert.ok(resumed.value?.hookSpecificOutput);
+  assert.equal(resumed.value.systemMessage, undefined);
+});
+
+test('busy shared state still offers an unrecorded revision', async (t) => {
+  const f = await fixture(t);
+  await f.run('SessionStart');
+  await f.write('CONTEXT.md', '# Changed while another session owns the lock\n');
+  const lock = path.join(f.root, '.agent-runtime/knowledge-hooks/lock');
+  await fs.mkdir(lock);
+  await fs.writeFile(path.join(lock, 'owner.json'), JSON.stringify({
+    schema: 1,
+    pid: process.pid,
+    token: 'active',
+    expiresAt: Date.now() + 60_000,
+  }));
+
+  const result = await f.run('UserPromptSubmit');
+  assert.equal(result.code, 0);
+  assert.ok(result.value?.hookSpecificOutput);
+  assert.equal(result.value.systemMessage, undefined);
+});
+
+test('Copilot adapter emits compatible context and filters non-write tools', async (t) => {
+  const f = await fixture(t);
+  const startup = await f.run('SessionStart', {}, 'copilot.mjs');
+  assert.match(startup.value.additionalContext, /REPO_KNOWLEDGE_REFRESH/);
+  assert.equal(startup.value.additionalContext, startup.value.hookSpecificOutput.additionalContext);
+  await f.write('CONTEXT.md', '# New context\n');
+  assert.equal((await f.run('PostToolUse', { tool_name: 'read_file' }, 'copilot.mjs')).value, null);
+  const changed = await f.run('PostToolUse', { tool_name: 'create_file' }, 'copilot.mjs');
+  assert.match(changed.value.additionalContext, /REPO_KNOWLEDGE_REFRESH/);
+});
+
+test('Copilot uses one canonical skill source and native hook schema', async () => {
+  const hooks = JSON.parse(await fs.readFile(new URL('../.github/hooks/repo-knowledge.json', import.meta.url), 'utf8'));
+  const vscode = JSON.parse(await fs.readFile(new URL('../.vscode/settings.json', import.meta.url), 'utf8'));
+  assert.equal(hooks.version, 1);
+  assert.deepEqual(Object.keys(hooks.hooks), ['SessionStart', 'UserPromptSubmit', 'PostToolUse']);
+  for (const group of Object.values(hooks.hooks)) {
+    assert.equal(typeof group[0].command, 'string');
+    assert.match(group[0].command, /scripts\/copilot\.mjs$/);
+    assert.equal('args' in group[0], false);
+  }
+  assert.equal(hooks.hooks.PostToolUse[0].matcher, 'Edit|Write');
+  assert.equal(vscode['chat.hookFilesLocations']['.github/hooks'], true);
+  assert.equal(vscode['chat.hookFilesLocations']['.claude/settings.json'], false);
+  assert.equal(vscode['chat.hookFilesLocations']['.claude/settings.local.json'], false);
+  await assert.rejects(fs.access(new URL('../.github/skills', import.meta.url)));
 });

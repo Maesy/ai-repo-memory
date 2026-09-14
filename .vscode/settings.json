@@ -1,0 +1,11 @@
+{
+  "chat.agentSkillsLocations": {
+    ".agents/skills": true,
+    ".claude/skills": false
+  },
+  "chat.hookFilesLocations": {
+    ".github/hooks": true,
+    ".claude/settings.json": false,
+    ".claude/settings.local.json": false
+  }
+}

@@ -7,22 +7,26 @@ version: 1.0.0
 
 # A döntés címe
 
-Ez kitöltendő sablon. Technikai döntésnél ADR az `architecture/decisions/`,
-termékdöntésnél PDR a `product/decisions/` alá kerül a `docs/knowledge/` alatt.
-Utóbbi esetben az ID-t és a `type` értékét is igazítsd. Töröld ezt a magyarázatot.
+Ez kitöltendő sablon. Technikai döntésnél másold `docs/adr/`, termékdöntésnél
+`docs/pdr/` alá, állítsd be a `type` és `id` mezőt, majd töröld ezt a magyarázatot.
 
-## Helyzet és cél
-Mi indokolja a döntést, és mely követelményt érinti?
+## Kontextus
+
+Milyen tartós problémáról, korlátról vagy döntési pontról van szó?
 
 ## Megvizsgált lehetőségek
-Csak a ténylegesen megfontolt alternatívákat és érdemi különbségeiket írd le.
 
-## Javaslat és indoklás
-Mi a választás, és miért? Egyeztetés előtt maradjon javaslat.
+- Lehetőség és releváns kompromisszum.
+
+## Döntés és indoklás
+
+Mit választottunk és miért?
 
 ## Következmények
-Előnyök, vállalt kompromisszumok és szükséges további lépések.
+
+- Pozitív és negatív következmény, migráció vagy visszaállítási feltétel.
 
 ## Kapcsolatok és felülvizsgálat
-Kapcsolódó PRD/ADR/PDR, esetleges előd. Jóváhagyót, dátumot és jóváhagyási alapot
-csak valós egyeztetés után rögzíts, a felülvizsgált verzióhoz kötve.
+
+Hivatkozz kapcsolódó PRD/PDR/ADR rekordokra. Lényegi változtatáskor készíts utódot.
+Elfogadást csak tényleges jóváhagyási bizonyíték alapján rögzíts.

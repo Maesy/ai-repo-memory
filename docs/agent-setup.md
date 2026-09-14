@@ -1,51 +1,70 @@
-# Claude és Codex beállítása
+# Claude, Codex és GitHub Copilot beállítása
 
-Ellenőrzött dokumentáció: 2026-09-11. A kliensverzió, a szervezeti szabályok és a
-konfiguráció hatóköre számít. A fájlok megléte nem bizonyít sikeres élő integrációt.
+Ellenőrizve: 2026-09-14. A kliensverzió, szervezeti policy és workspace trust
+számít; a fájlok megléte nem bizonyít élő integrációt.
 
-## Mindkét kliensnél
+## Közös előfeltételek
 
-1. Az új projekt tényleges gyökerét nyisd meg. Töltsd ki a [projektadatlapot](project.md).
-2. Indíts új sessiont a beállítások átvétele után. A már betöltött kontextus nem törlődik
-   egy kapcsoló átállításától.
-3. Ellenőrizd a négy projektskill elérhetőségét. A hookokhoz és az index generálásához,
-   ellenőrzéséhez Node 22+ szükséges. A hookok futásához támogatott kliens
-   és a kliens hook-trustja kell; npm install, MCP és külön plugin nem szükséges.
-   A meglévő tudás olvasása és keresése Node nélkül is működik. [Hookbeállítás és próba](hooks.md).
-4. A választott modell maradhat a csapat bevált alapértéke. A repo nem ír elő modellt,
-   gondolkodási szintet vagy teljes gépi hozzáférést.
-5. Végezd el az [instrukcióbetöltés ellenőrzését](instruction-loading.md), külön mindkét kliensben.
+1. Nyisd meg a célrepository valódi gyökerét és töltsd ki a
+   [projektadatlapot](project.md).
+2. Biztosíts Node.js 24.x LTS-t a host `PATH`-ján. Nem kell `npm install`, Python,
+   MCP vagy háttérszolgáltatás.
+3. Indíts új sessiont a beállítások átvétele után.
+4. Ellenőrizd a négy projektskill elérhetőségét és az
+   [instrukcióbetöltést](instruction-loading.md).
+5. Tekintsd át és külön engedélyezd a [hookokat](hooks.md) minden használt kliensben.
 
-## Claude Code a desktop alkalmazásban
+A meglévő Markdown-tudás olvasásához nincs szükség Node-ra; csak a hookok,
+generátorok és tesztek futtatásához.
 
-- A **Code** felületen válaszd ki a helyi projektet; a sima beszélgetés eltérő munkakörnyezet.
-- A gyökér `CLAUDE.md` Claude-specifikus `@AGENTS.md` importot használ.
-- A projekt `.claude/settings.json` fájljában az `autoMemoryEnabled: false`
-  a saját automatikus memória kikapcsolásának dokumentált beállítása.
-- Ugyanitt három lifecycle-hook a közös `.agents/skills/refresh-repo-knowledge/scripts/claude.mjs`
-  programot indítja. A `PostToolUse` csak `Write|Edit` eszközre illeszkedik.
-  A repo gyökerét a Claude projektútvonalából veszi.
-- A `.claude/skills/` belépői a közös `.agents/skills/` fájlok teljes elolvasását kérik.
-  Ezek követett normál fájlok, nem symlinkek. A workflow a közös forrásban él.
-- A skillválasztóban keresd a `find-repo-knowledge` nevet; ahol támogatott,
-  `/find-repo-knowledge` formában is kérhető. `/memory` segít az instrukciók ellenőrzésében.
-- A feladathoz szükséges jogosultságot válaszd. A bypass mód, a Remote Control és
-  a párhuzamos automatikus munkafolyamat nem feltétele a starter használatának.
+## Claude
 
-## Codex a desktop alkalmazásban
+- A gyökér `CLAUDE.md` importálja a közös `AGENTS.md` fájlt.
+- `.claude/settings.json` kikapcsolja a kliens automatikus memóriáját és három
+  projekt-hookot regisztrál.
+- `.claude/skills/` generált adapterei a `.agents/skills/` kanonikus forrásaira
+  irányítanak; ne szerkeszd őket kézzel.
+- A hookok a `${CLAUDE_PROJECT_DIR}` útvonalból indulnak, és a
+  `scripts/claude.mjs` belépőt futtatják.
 
-- Helyi projektként add hozzá a repo gyökerét. Ellenőrizd a projekt bizalmi állapotát.
-- A közös belépési pont az `AGENTS.md`; a skillek forrása a `.agents/skills/`.
-- A `.codex/config.toml` a projektben tiltja a memória képzését és használatát a
-  támogatott konfigurációs rétegben. A fájl nem módosít globális beállítást.
-- A beállításokban ellenőrizd a munkához szükséges fájlírási és parancsengedélyeket.
-  Az olvasási mód elemzésre alkalmas; a tudástár frissítéséhez fájlírás kell.
-- A skillválasztóban jelöld ki a `find-repo-knowledge` skillt. A CLI-ben
-  `$find-repo-knowledge` is használható. Az app és a PATH-on elérhető CLI verziója eltérhet.
-- A `.codex/hooks.json` három tudásfrissítési hookot regisztrál; a `PostToolUse`
-  csak `Write|Edit` eszközre illeszkedik. A launcher almappából is megkeresi a
-  közös `codex.mjs` programot. Normál kliens-trust és
-  saját működési próba szükséges; globális trust-felülírást nem állítunk be.
+## Codex
+
+- A Codex közvetlenül a gyökér `AGENTS.md` szabályait használja.
+- `.codex/config.toml` kikapcsolja a repository saját tudását megkerülő automatikus
+  memóriát.
+- `.codex/hooks.json` ugyanazt a közös hookmotort a `scripts/codex.mjs` belépőn át
+  indítja, és nested working directoryból is megkeresi a repository gyökerét.
+- A projekt-hook trustját minden fejlesztő saját kliensében ellenőrzi; a repository
+  nem nyilváníthatja megbízhatóvá önmagát.
+
+## GitHub Copilot
+
+- Használj VS Code 1.125 vagy újabb verziót. A korábbi verziók több támogatott
+  skillkönyvtár átfedésekor duplikált skillt mutathatnak.
+- A Copilot közvetlenül a `.agents/skills/` könyvtár projekt-skilljeit használja.
+  Ne készíts `.github/skills/` másolatot, és ne add hozzá `.claude/skills/`-t külön
+  Copilot-forrásként.
+- A natív hookdefiníció `.github/hooks/repo-knowledge.json`; egyetlen `command`
+  stringet használ, nem Claude-féle `command` + `args` alakot.
+- A `.vscode/settings.json` engedélyezi a `.github/hooks/` forrást, és letiltja a
+  Claude settings hookként történő automatikus betöltését VS Code Copilotban.
+- Workspace trust és szervezeti policy továbbra is kliensenként ellenőrzendő.
+- A Copilot CLI az azonos nevű skilleknél az első támogatott projektforrást használja;
+  `.github/skills/` hiányában az `.agents/skills/` megelőzi `.claude/skills/`-t.
+  A `.vscode/settings.json` a deprecated `chat.agentSkillsLocations` beállítással
+  a Local agentben is kizárja `.claude/skills/`-t. Agent Host ezt nem használja;
+  ott az aktuális natív felderítést az élő ellenőrzéssel kell igazolni.
+
+## Opcionális skillek
+
+Az alap négy saját skillje mellé további skillek telepíthetők. Telepítés előtt
+kövesd a [kompatibilitási auditot](agents/skill-compatibility.md), majd generáld újra
+az adaptereket:
+
+```text
+node .agents/scripts/sync-claude-skill-adapters.mjs --write
+node .agents/scripts/sync-claude-skill-adapters.mjs --check
+```
 
 ## Első ellenőrző kérés
 
@@ -56,29 +75,15 @@ Van-e már elfogadott termékkövetelmény? Mi nincs még kitöltve?
 Most ne módosíts fájlt.
 ```
 
-A friss starterben a helyes eredmény: a projektadatok még kitöltendők, és nincs
-elfogadott termékkövetelmény. Ne fogadd el a sablon példaazonosítóját valós döntésként.
+A friss starter helyes válasza: a projektadatok kitöltendők, és nincs elfogadott
+termékkövetelmény. A sablonok nem termékkövetelmények; a friss starter saját
+projekt-ADR-t sem tartalmaz.
 
-## Napi használat és karbantartás
+## Ellenőrzött kliensreferenciák
 
-- Feladat elején keresés és teljes forrásolvasás; tartós döntésnél rögzítés.
-- Folytatáskor és feladatváltáskor újraolvasás; készre jelentés előtt ellenőrzés.
-- A két kliens azonos repo-neve nem bizonyít azonos worktree-t vagy fájlállapotot.
-  Szükség esetén a csapat Git-folyamatával add át a változást.
-- Meglévő projektbe másoláskor egyesítsd a beállításokat; ne írd felül a csapat saját fájljait.
-- Skillmódosításnál a workflow-t a `.agents/skills/` alatt szerkeszd. Ha a `name` vagy
-  `description` változik, ugyanaz a metadata szerepeljen a Claude-belépőben is.
-  A teljes eljárást ne másold bele a belépőbe.
+- [VS Code Agent Skills](https://code.visualstudio.com/docs/agent-customization/agent-skills)
+- [GitHub Copilot CLI skillhelyek és prioritás](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference)
+- [VS Code skillduplikáció javítása, 1.125.0](https://github.com/microsoft/vscode/issues/317940)
 
-## Hivatalos források
-
-- [Claude Code memória és importok](https://code.claude.com/docs/en/memory)
-- [Claude Code skillek](https://code.claude.com/docs/en/skills)
-- [Claude desktop](https://code.claude.com/docs/en/desktop)
-- [Codex instrukciók](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
-- [Codex skillek](https://learn.chatgpt.com/docs/build-skills)
-- [Codex memóriavezérlők](https://learn.chatgpt.com/docs/customization/memories)
-- [Codex hookok](https://learn.chatgpt.com/docs/hooks)
-
-A személyes memória kikapcsolása az összehasonlítható közös alapot segíti, de a
-kontextus, a history és a compaction más fogalom. Korábbi emlékeket nem kell törölni.
+Dokumentációellenőrzés: 2026-09-14. Élő Copilot CLI nem volt elérhető ebben a
+környezetben; a tényleges felderítést minden használt kliensben külön kell próbálni.

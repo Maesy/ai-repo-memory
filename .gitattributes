@@ -2,3 +2,8 @@
 *.md text eol=lf
 *.json text eol=lf
 *.toml text eol=lf
+*.mjs text eol=lf
+*.yml text eol=lf
+.nvmrc text eol=lf
+*.yml text eol=lf
+.nvmrc text eol=lf

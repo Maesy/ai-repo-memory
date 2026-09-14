@@ -1,107 +1,108 @@
-# A repo emlékszik — induló projektalap
+# AI repo memory starter
 
-**Közös instrukciók és verziókezelt projekttudás Claude Code és Codex számára.**
-Kotlin-, Java-, .NET-, Python-, webes vagy más projekthez is használható.
-A dokumentumok olvasásához nem kell runtime. Az indexgenerátorhoz és a mellékelt
-Claude- és Codex-hookokhoz Node 22+ szükséges; npm install, Python és háttérszolgáltatás nem kell.
-Az agentalkalmazás és a saját projekted eszközei ettől külön előfeltételek.
+Technológiasemleges repository-alap közös, verziózott projekttudáshoz és opcionális
+Claude/Codex/GitHub Copilot frissítési hookokhoz. Frontend-, JVM-, .NET-, Python- vagy más projektre
+ráépíthető; alkalmazáskódot és termékspecifikációt nem tartalmaz.
 
-## Indulás
+## Alapelvek
 
-1. Használd ezt a tartalmat az új repód alapjaként, vagy másold a meglévő projektbe.
-   Meglévő instrukció- és konfigurációfájlokat egyesíts, ne írj felül.
-2. Töltsd ki a [projektadatlapot](docs/project.md): cél, technológia, saját build- és
-   tesztparancsok, felelősök és korlátok.
-3. Nyisd meg a projekt gyökerét Claude Code-ban vagy Codexben. Kövesd az alábbi
-   beállításokat és a [hookok ellenőrzését](docs/hooks.md), majd indíts új sessiont.
-   Codexben minden fejlesztőnek külön át kell néznie és jóvá kell hagynia a
-   projekt hookjait; a repo nem nyilváníthatja megbízhatóvá saját magát.
-4. Kérd az [első ellenőrző feladatot](docs/agent-setup.md#első-ellenőrző-kérés).
-   A starterben nincs előre elfogadott termékkövetelmény vagy fiktív jóváhagyás.
-5. Az első saját követelményt és döntést a [sablonokból](docs/templates/) rögzítsd.
-   Az alkalmazás technológiáját, könyvtárszerkezetét és CI-jét te választod hozzá.
+- A Markdown-tudás runtime nélkül olvasható.
+- A repository saját segédscriptjeinek egyetlen runtime-ja **Node.js 24.x LTS**.
+- A scriptek `.mjs` fájlok, kizárólag beépített modulokkal: nincs `npm install`,
+  Python-, pip-, Bash- vagy háttérszolgáltatás-függőség.
+- Ez csak a starter saját infrastruktúrájára vonatkozik. A ráépülő alkalmazás
+  használhat saját `package.json`-t, runtime-ot, függőségeket és tesztfájlokat.
+- A kanonikus skillforrás `.agents/skills/`; Claude vékony adapterei
+  `.claude/skills/` alatt vannak.
+- GitHub Copilot közvetlenül az `.agents/skills/` kanonikus skilleket használja;
+  számára nem készül második skillmásolat.
+- Az alap négy saját skillt tartalmaz: `find-repo-knowledge`, `record-decision`,
+  `refresh-repo-knowledge`, `validate-knowledge`.
+- További engineering skillek opcionálisan telepíthetők. Használatuk nincs előírva,
+  és saját függőségük nem válik automatikusan a starter követelményévé.
 
-## Claude és Codex beállítása
+## Másolás új projektbe
 
-| | Claude Code | Codex |
-| --- | --- | --- |
-| Belépési pont | `CLAUDE.md`, benne `@AGENTS.md` import | `AGENTS.md` közvetlen betöltése |
-| Projektskill | `.claude/skills/` vékony belépők | `.agents/skills/` közös forrás |
-| Projektbeállítás | `.claude/settings.json` | `.codex/config.toml` és `.codex/hooks.json` |
-| Automatikus memória | `autoMemoryEnabled: false` | `generate_memories = false`, `use_memories = false` |
-| Frissítés | Lifecycle-hook jelzése → közös skill és forrásolvasás | Lifecycle-hook jelzése → közös skill és forrásolvasás |
+Meglévő projektbe az `.github/hooks/`, `.github/workflows/` és `.vscode/settings.json`
+fájlokat is egyesítsd a helyi beállításokkal; ne írj felül vakon meglévő konfigurációt.
 
-A projektkonfiguráció hatása a kliens támogatásától és bizalmi állapotától függ.
+1. Másold be a starter tartalmát a célrepository gyökerébe.
+2. Egyesítsd a meglévő `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` és
+   `.codex/` fájlokat; ne írd felül vakon a projekt szabályait.
+3. Töltsd ki a [projektadatlapot](docs/project.md).
+4. Biztosíts Node.js 24.x LTS-t a helyi és CI-környezetben.
+5. Ellenőrizd a [kliensbeállítást](docs/agent-setup.md) és a
+   [hookok trustját](docs/hooks.md) külön minden használt kliensben.
 
-- A repo gyökeréből indíts új feladatot, és ellenőrizd a négy projektskill felismerését.
-- A feladathoz szükséges jogosultságot válaszd; nincs kötelező modell vagy teljes hozzáférés.
-- A már betöltött emlék nem tűnik el egy kapcsolótól. Globális beállítást nem kell módosítani.
-- Az `@file` importot ne általánosítsd az `AGENTS.md`-re. A közös fájlok kifejezett
-  olvasási utasítást használnak; egy link önmagában nem betöltés.
+A starter CI-je név szerint csak a három saját infrastruktúra-tesztet futtatja.
+Az alkalmazás buildjét, lintjét és tesztjeit külön jobban vagy workflow-ban add
+hozzá; az általános `node --test` automatikusan az alkalmazás tesztjeit is
+felderítheti.
 
-Részletes desktop- és CLI-útmutató, hivatalos forrásokkal:
-[agentbeállítások](docs/agent-setup.md). A betöltés működése:
-[mit lát ténylegesen az agent?](docs/instruction-loading.md).
-
-## Napi munkamenet
-
-1. **Keresés:** `find-repo-knowledge` — olvasd el a feladathoz tartozó forrásokat.
-2. **Rögzítés:** `record-decision` — tartós döntés és indoklás a megfelelő helyre;
-   az író agent a skill scriptjével frissíti az indexet.
-3. **Frissítés:** `refresh-repo-knowledge` — folytatásnál és változásnál újraolvasás.
-4. **Ellenőrzés:** `validate-knowledge` — gépi indexellenőrzés, majd státusz,
-   kapcsolatok, jóváhagyás és diff átnézése.
-
-Az index karbantartása a tudástárat módosító agent feladata. A generátor a források
-címéből és útvonalából dolgozik; hozzáadás, átnevezés, címváltozás és törlés után
-ugyanazzal a paranccsal fut. Változatlan bemenetnél nem írja át az indexet.
+## Szerkezet
 
 ```text
+AGENTS.md                         közös rövid szabályok
+CLAUDE.md                         Claude belépési pont
+.agents/skills/                   négy kanonikus saját skill
+.agents/scripts/                  skilladapter-generátor
+.claude/skills/                   generált Claude-adapterek
+.claude/settings.json             Claude projekt-hookok
+.codex/hooks.json                 Codex projekt-hookok
+.github/hooks/                    GitHub Copilot projekt-hookok
+.github/workflows/                starter-ellenőrző CI
+.vscode/settings.json             Copilot skill- és hookforrások kiválasztása
+docs/INDEX.md                     generált rekordindex
+docs/README.md                    tudásrouting
+docs/governance.md                rekord-életciklus
+docs/adr/                         technikai döntések
+docs/pdr/                         termékdöntések
+docs/prd/                         követelmények
+docs/agents/                      agent- és skillpolicy
+docs/research/                    kutatási bizonyíték
+docs/templates/                   kitöltendő sablonok
+tests/                            név szerint futtatott starter-infrastruktúra-tesztek
+```
+
+A `docs/adr/`, `docs/pdr/` és `docs/prd/` verziókezelt üres könyvtár; az első
+valódi rekordig csak `.gitkeep` fájlt tartalmaz.
+
+## Karbantartási parancsok
+
+```text
+node .agents/scripts/sync-claude-skill-adapters.mjs --write
+node .agents/scripts/sync-claude-skill-adapters.mjs --check
 node .agents/skills/record-decision/scripts/update-index.mjs --write
 node .agents/skills/record-decision/scripts/update-index.mjs --check
+node --test tests/knowledge-hooks.test.mjs tests/knowledge-index.test.mjs tests/skill-integration.test.mjs
 ```
 
-A `--check` nem módosít fájlokat. Az automatikus ellenőrzés a tartalomjegyzék
-helyességét vizsgálja; a döntések jelentését és jóváhagyását az agent továbbra is
-a teljes forrásokból ellenőrzi. Részletek: [az index frissítése](docs/knowledge/README.md).
-Külön worktree vagy gép esetén a fájlokat a Git-folyamatotokkal is szinkronizálni kell.
+Az adaptergenerátort saját skill metadata-változása vagy opcionális skill
+telepítése/eltávolítása után futtasd. Az indexgenerátort rekord hozzáadása,
+átnevezése, címváltozása vagy törlése után futtasd.
 
-## Felépítés
+## Opcionális skillek
 
-```text
-ai-repo-memory/
-├── AGENTS.md                 közös, rövid munkaszabályok
-├── CLAUDE.md                 Claude-specifikus belépő
-├── .agents/skills/           négy közös eljárás
-│   ├── record-decision/scripts/  az index generátora és ellenőrzője
-│   └── refresh-repo-knowledge/scripts/  a skill saját hookprogramjai
-├── .claude/                  projektbeállítás és skillbelépők
-├── .codex/                   projektmemória- és hookbeállítás
-├── docs/project.md           a saját projekt kitöltendő adatai
-├── docs/knowledge/           index, használat és karbantartás
-├── docs/templates/           követelmény- és döntéssablon
-├── docs/agent-setup.md        a kliensek beállítása
-├── docs/instruction-loading.md  betöltés és ellenőrzés
-├── docs/hooks.md             a hookok működése, trustja és ellenőrzése
-└── tests/                    a hookfolyamat és az indexgenerátor tesztjei
-```
+Az integrációs szerződés nem kötődik egyetlen külső gyűjteményhez sem:
 
-A termék- és architektúradokumentumok mappái az első valódi tartalommal jönnek létre.
-Az indexben cím, hivatkozás és mappa szerepel; a verzió és státusz kanonikus helye a forrás.
+- közös kanonikus hely: `.agents/skills/<skill>/SKILL.md`;
+- tartós doménnyelv: gyökérbeli `CONTEXT.md`, nagyobb rendszernél
+  `CONTEXT-MAP.md` és `src/<context>/CONTEXT.md`;
+- PRD/PDR routing: `docs/prd/`, `docs/pdr/`; rendszerszintű ADR:
+  `docs/adr/`; komponens-ADR: `src/<context>/docs/adr/`;
+- issue tracker és triage-konfiguráció csak a célprojektben jön létre;
+- telepítés előtt runtime-, CLI-, hálózat- és írási audit szükséges;
+- azonos nevű globális és projektskill együtt kerülendő.
 
-## Mire ad alapot?
+Részletek: [skillkompatibilitás](docs/agents/skill-compatibility.md).
 
-- Új projektben ugyanazokhoz a karbantartott szabályokhoz férhet hozzá mindkét agent.
-- A követelmények és döntések visszakereshetők, felülvizsgálhatók, Gitben átadhatók.
-- A projekt nem örököl weboldalt, npm-csomagokat, példaterméket vagy annak döntéseit.
-- A jó működéshez továbbra is kell pontos feladat, teszt és review. A fájl jelenléte,
-  betöltése és helyes alkalmazása három külön állítás; tökéletes agentműködést nem garantálunk.
+## Korlátok
 
-Az opcionális [hookos automatizálás](docs/hooks.md) a projektadatlap és a
-tudásfájlok változását észleli mindkét kliensben. A jelzés nem jelent jóváhagyást,
-forrásolvasási nyugtát vagy közvetlen agent–agent üzenetküldést. Hook nélkül
-kifejezetten kérd a frissítő skillt. A helyi trust- és policy-állapot nem kerül
-a repóba; a két kliensben külön ellenőrizd a tényleges futást.
+- A hookok futása kliensverziótól, host policytól és workspace trusttól függ.
+- A Claude jelenlegi menedzselt cloud image-e Node 20/21/22 verziókat dokumentál;
+  ezért a scriptek átmenetileg Node 22-kompatibilis API-kat használnak, miközben a
+  támogatott helyi/CI baseline Node 24.x LTS.
+- A hookjelzés nem forrásolvasási nyugta és nem jóváhagyás.
+- A starter nem ír elő alkalmazásmodellt, issue trackert vagy kiadási folyamatot.
 
-Starter-változat: [STARTER_VERSION](STARTER_VERSION). A forrásokra és kliensbeállításokra
-vonatkozó ellenőrzési dátum a részletes útmutatóban szerepel. [Licenc](LICENSE).
+Starter-verzió: [STARTER_VERSION](STARTER_VERSION).

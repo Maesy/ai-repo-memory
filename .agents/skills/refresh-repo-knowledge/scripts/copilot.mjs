@@ -1,3 +1,3 @@
 import { main } from './knowledge.mjs';
 
-await main('claude');
+await main('copilot');

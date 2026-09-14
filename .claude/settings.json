@@ -1,48 +1,8 @@
 {
   "autoMemoryEnabled": false,
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
-            ],
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
-            ],
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"
-            ],
-            "timeout": 5
-          }
-        ]
-      }
-    ]
+    "SessionStart": [{"hooks": [{"type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"], "timeout": 5}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"], "timeout": 5}]}],
+    "PostToolUse": [{"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.agents/skills/refresh-repo-knowledge/scripts/claude.mjs"], "timeout": 5}]}]
   }
 }
